@@ -1,0 +1,168 @@
+!
+! Comprehensive Bulk Migration Test - Phase 1 Features
+! Testing: Interface Ranges + VLAN Ranges + Port-Channels
+! Scenario: Data Center Top-of-Rack (ToR) Switch
+!
+version 15.2
+!
+hostname DC-TOR-SW-01
+!
+! ========================================
+! VLAN Configuration - Using VLAN Ranges
+! ========================================
+!
+! Server VLANs (bulk creation)
+vlan 10-50
+!
+! Individual VLANs with names
+vlan 100
+ name MANAGEMENT
+!
+vlan 200
+ name STORAGE
+!
+vlan 300
+ name DMZ
+!
+! ========================================
+! Port-Channel Configuration - Server LAGs
+! ========================================
+!
+! Port-Channel 1 - Database Server LAG
+interface Port-channel1
+ description LAG to DB-Server-01
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,200
+ no shutdown
+!
+! Port-Channel 2 - Web Server LAG
+interface Port-channel2
+ description LAG to Web-Server-01
+ switchport mode trunk
+ switchport trunk allowed vlan 10,30,300
+ no shutdown
+!
+! Port-Channel 3 - Storage LAG
+interface Port-channel3
+ description LAG to Storage-Array
+ switchport mode trunk
+ switchport trunk allowed vlan 200
+ no shutdown
+!
+! Port-Channel 10 - Uplink to Core (Routed)
+interface Port-channel10
+ description Routed LAG to Core Switch
+ no switchport
+ ip address 10.0.1.1 255.255.255.252
+ mtu 9000
+ no shutdown
+!
+! ========================================
+! Server Access Ports - Using Interface Range
+! ========================================
+!
+! Bulk server access ports (VLAN 10)
+interface range GigabitEthernet0/1-20
+ description Server Access Ports - VLAN 10
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ no shutdown
+!
+! Application server ports (VLAN 30)
+interface range GigabitEthernet0/21-30
+ description App Server Ports - VLAN 30
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ no shutdown
+!
+! ========================================
+! Port-Channel Member Interfaces
+! ========================================
+!
+! DB Server LAG members
+interface GigabitEthernet0/41
+ description DB-Server-01 NIC1
+ channel-group 1 mode active
+ no shutdown
+!
+interface GigabitEthernet0/42
+ description DB-Server-01 NIC2
+ channel-group 1 mode active
+ no shutdown
+!
+! Web Server LAG members
+interface GigabitEthernet0/43
+ description Web-Server-01 NIC1
+ channel-group 2 mode active
+ no shutdown
+!
+interface GigabitEthernet0/44
+ description Web-Server-01 NIC2
+ channel-group 2 mode active
+ no shutdown
+!
+! Storage LAG members
+interface GigabitEthernet0/45
+ description Storage-Array Port1
+ channel-group 3 mode active
+ no shutdown
+!
+interface GigabitEthernet0/46
+ description Storage-Array Port2
+ channel-group 3 mode active
+ no shutdown
+!
+! Uplink LAG members (10G)
+interface TenGigabitEthernet0/1
+ description Uplink to Core - Link 1
+ channel-group 10 mode active
+ no shutdown
+!
+interface TenGigabitEthernet0/2
+ description Uplink to Core - Link 2
+ channel-group 10 mode active
+ no shutdown
+!
+
+
+! ========================================
+! Trunk Ports - Using Interface Range
+! ========================================
+!
+! Trunk ports to distribution switches
+interface range GigabitEthernet0/47-48
+ description Trunk to Distribution Layer
+ switchport mode trunk
+ switchport trunk allowed vlan 10-50,100,200,300
+ no shutdown
+!
+! ========================================
+! VLAN Interfaces (SVIs)
+! ========================================
+!
+interface Vlan100
+ description Management VLAN
+ ip address 192.168.100.1 255.255.255.0
+ no shutdown
+!
+interface Vlan200
+ description Storage VLAN
+ ip address 192.168.200.1 255.255.255.0
+ no shutdown
+!
+! ========================================
+! Static Routes
+! ========================================
+!
+! Default route via core
+ip route 0.0.0.0 0.0.0.0 10.0.1.2
+!
+! Management network route
+ip route 172.16.0.0 255.255.0.0 192.168.100.254
+!
+! Storage network route
+ip route 10.10.0.0 255.255.0.0 192.168.200.254
+!
+end

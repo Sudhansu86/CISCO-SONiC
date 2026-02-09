@@ -1,0 +1,214 @@
+!
+! Complex Cisco Configuration for Testing
+! Multi-site Data Center Switch Configuration
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+hostname DC-CORE-SW-01
+!
+! Configure VLANs
+vlan 10
+ name MANAGEMENT
+!
+vlan 20
+ name WEB_SERVERS
+!
+vlan 30
+ name APP_SERVERS
+!
+vlan 40
+ name DATABASE_SERVERS
+!
+vlan 50
+ name STORAGE_NETWORK
+!
+vlan 100
+ name DMZ
+!
+vlan 200
+ name GUEST_NETWORK
+!
+! Physical Interfaces - Uplinks
+interface TenGigabitEthernet0/1
+ description 10G Uplink to Core Router 1
+ no switchport
+ ip address 10.0.1.1 255.255.255.252
+ mtu 9000
+ no shutdown
+!
+interface TenGigabitEthernet0/2
+ description 10G Uplink to Core Router 2
+ no switchport
+ ip address 10.0.2.1 255.255.255.252
+ mtu 9000
+ no shutdown
+!
+! Server Connections - Access Ports
+interface GigabitEthernet0/1
+ description Web Server 1
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description Web Server 2
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/3
+ description App Server 1
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/4
+ description App Server 2
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/5
+ description Database Server 1
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/6
+ description Database Server 2
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/7
+ description Storage Array Port 1
+ switchport mode access
+ switchport access vlan 50
+ mtu 9000
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet0/8
+ description Storage Array Port 2
+ switchport mode access
+ switchport access vlan 50
+ mtu 9000
+ spanning-tree portfast
+ no shutdown
+!
+! Trunk Ports
+interface GigabitEthernet0/10
+ description Trunk to Distribution Switch 1
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50
+ no shutdown
+!
+interface GigabitEthernet0/11
+ description Trunk to Distribution Switch 2
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50
+ no shutdown
+!
+interface GigabitEthernet0/12
+ description Trunk to DMZ Firewall
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ no shutdown
+!
+! VLAN Interfaces (SVIs)
+interface Vlan10
+ description Management VLAN
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+!
+interface Vlan20
+ description Web Servers VLAN
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+!
+interface Vlan30
+ description App Servers VLAN
+ ip address 192.168.30.1 255.255.255.0
+ no shutdown
+!
+interface Vlan40
+ description Database Servers VLAN
+ ip address 192.168.40.1 255.255.255.0
+ no shutdown
+!
+interface Vlan50
+ description Storage Network VLAN
+ ip address 192.168.50.1 255.255.255.0
+ mtu 9000
+ no shutdown
+!
+interface Vlan100
+ description DMZ VLAN
+ ip address 10.100.100.1 255.255.255.0
+ no shutdown
+!
+! Static Routes
+ip route 0.0.0.0 0.0.0.0 10.0.1.2
+ip route 0.0.0.0 0.0.0.0 10.0.2.2 10
+ip route 172.16.0.0 255.255.0.0 10.0.1.2
+ip route 172.17.0.0 255.255.0.0 10.0.2.2
+ip route 10.200.0.0 255.255.0.0 192.168.10.254
+!
+! OSPF Configuration
+router ospf 1
+ router-id 10.0.0.1
+ network 192.168.10.0 0.0.0.255 area 0
+ network 192.168.20.0 0.0.0.255 area 0
+ network 192.168.30.0 0.0.0.255 area 0
+ network 10.0.1.0 0.0.0.3 area 0
+ network 10.0.2.0 0.0.0.3 area 0
+!
+! Access Control Lists
+ip access-list extended WEB_SERVER_ACL
+ permit tcp any 192.168.20.0 0.0.0.255 eq 80
+ permit tcp any 192.168.20.0 0.0.0.255 eq 443
+ permit tcp 192.168.30.0 0.0.0.255 192.168.20.0 0.0.0.255
+ deny ip any any log
+!
+ip access-list extended APP_SERVER_ACL
+ permit tcp 192.168.20.0 0.0.0.255 192.168.30.0 0.0.0.255 eq 8080
+ permit tcp 192.168.30.0 0.0.0.255 192.168.40.0 0.0.0.255 eq 3306
+ permit tcp 192.168.10.0 0.0.0.255 192.168.30.0 0.0.0.255 eq 22
+ deny ip any any log
+!
+ip access-list extended DB_SERVER_ACL
+ permit tcp 192.168.30.0 0.0.0.255 192.168.40.0 0.0.0.255 eq 3306
+ permit tcp 192.168.30.0 0.0.0.255 192.168.40.0 0.0.0.255 eq 5432
+ permit tcp 192.168.10.0 0.0.0.255 192.168.40.0 0.0.0.255 eq 22
+ deny ip any any log
+!
+! NTP Configuration
+ntp server 192.168.10.10
+ntp server 192.168.10.11
+!
+! SNMP Configuration
+snmp-server community public RO
+snmp-server location "Data Center - Rack 42"
+snmp-server contact "netops@example.com"
+!
+! Logging
+logging buffered 51200
+logging console warnings
+logging trap informational
+logging host 192.168.10.100
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ transport input ssh
+!
+end
+

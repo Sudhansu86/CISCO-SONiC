@@ -1,0 +1,73 @@
+!
+! Port-Channel (LAG) Configuration Test
+! Testing Phase 1 - Port-Channel Support
+!
+version 15.2
+!
+hostname LAG-TEST-SW-01
+!
+! VLANs
+vlan 10
+ name DATA
+!
+vlan 20
+ name VOICE
+!
+vlan 100
+ name MANAGEMENT
+!
+! Port-Channel 1 - Server LAG
+interface Port-channel1
+ description LAG to Server-01
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,100
+ no shutdown
+!
+! Port-Channel 2 - Uplink LAG
+interface Port-channel2
+ description LAG to Core Switch
+ no switchport
+ ip address 10.0.1.1 255.255.255.252
+ mtu 9000
+ no shutdown
+!
+! Member interfaces for Port-Channel 1
+interface GigabitEthernet0/1
+ description Member of LAG to Server-01
+ channel-group 1 mode active
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description Member of LAG to Server-01
+ channel-group 1 mode active
+ no shutdown
+!
+! Member interfaces for Port-Channel 2
+interface TenGigabitEthernet0/1
+ description Member of LAG to Core
+ channel-group 2 mode active
+ no shutdown
+!
+interface TenGigabitEthernet0/2
+ description Member of LAG to Core
+ channel-group 2 mode active
+ no shutdown
+!
+! Standalone access port
+interface GigabitEthernet0/10
+ description Standalone Server Port
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+!
+! VLAN Interface
+interface Vlan100
+ description Management VLAN
+ ip address 192.168.100.1 255.255.255.0
+ no shutdown
+!
+! Static Route
+ip route 0.0.0.0 0.0.0.0 10.0.1.2
+!
+end
+

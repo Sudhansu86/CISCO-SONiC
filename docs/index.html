@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cisco to SONiC Configuration Converter - Web Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Cisco to SONiC Configuration Converter</h1>
+            <p class="subtitle">Convert Cisco IOS/IOS-XE configurations to SONiC format - Web Demo</p>
+            <div class="badges">
+                <span class="badge badge-success">Phase 1 Complete</span>
+                <span class="badge badge-info">Interface Ranges</span>
+                <span class="badge badge-info">VLAN Ranges</span>
+                <span class="badge badge-info">Port-Channels</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📥 Cisco Configuration Input</h2>
+                    <div class="button-group">
+                        <button id="loadExample" class="btn btn-secondary">Load Example</button>
+                        <button id="clearInput" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+                <textarea id="ciscoInput" placeholder="Paste your Cisco IOS/IOS-XE configuration here...
+
+Example:
+hostname DC-SWITCH-01
+
+vlan 10-20
+
+interface range GigabitEthernet0/1-10
+ description Server Ports
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+
+interface Port-channel1
+ description Server LAG
+ switchport mode trunk
+ switchport trunk allowed vlan 10-20
+ no shutdown
+
+interface GigabitEthernet0/11
+ channel-group 1 mode active
+ no shutdown"></textarea>
+            </div>
+
+            <div class="controls">
+                <div class="platform-select">
+                    <label for="platform">SONiC Platform:</label>
+                    <select id="platform">
+                        <option value="x86_64-broadcom_enterprise_sonic">Broadcom Enterprise SONiC</option>
+                        <option value="x86_64-dell_s6000_s1220-r0">Dell S6000</option>
+                        <option value="x86_64-arista_7050_qx32s">Arista 7050 QX-32S</option>
+                        <option value="x86_64-mlnx_msn2700-r0">Mellanox MSN2700</option>
+                    </select>
+                </div>
+                <button id="convertBtn" class="btn btn-primary btn-large">
+                    <span class="btn-icon">⚡</span> Convert Configuration
+                </button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📤 SONiC Configuration Output</h2>
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="json">JSON</button>
+                        <button class="tab-btn" data-tab="cli">CLI Commands</button>
+                    </div>
+                    <button id="downloadBtn" class="btn btn-success">Download</button>
+                </div>
+                <div class="tab-content active" id="jsonTab">
+                    <pre id="sonicOutput" class="output-area">SONiC JSON configuration will appear here...</pre>
+                </div>
+                <div class="tab-content" id="cliTab">
+                    <pre id="cliOutput" class="output-area">SONiC CLI commands will appear here...</pre>
+                </div>
+            </div>
+
+            <div class="stats" id="stats" style="display: none;">
+                <h3>📊 Conversion Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Interfaces:</span>
+                        <span class="stat-value" id="statInterfaces">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">VLANs:</span>
+                        <span class="stat-value" id="statVlans">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Port-Channels:</span>
+                        <span class="stat-value" id="statPortChannels">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">VLAN Members:</span>
+                        <span class="stat-value" id="statVlanMembers">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Static Routes:</span>
+                        <span class="stat-value" id="statRoutes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Conversion Time:</span>
+                        <span class="stat-value" id="statTime">0ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                <strong>Note:</strong> This is a web demo with limited functionality.
+                For full features, download the <a href="https://github.com/Sudhansu86/CISCO-SONiC" target="_blank">Java application</a>.
+            </p>
+            <p>
+                <a href="https://github.com/Sudhansu86/CISCO-SONiC" target="_blank">View on GitHub</a> |
+                <a href="https://github.com/Sudhansu86/CISCO-SONiC/blob/main/README.md" target="_blank">Documentation</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="converter.js"></script>
+</body>
+</html>
+
