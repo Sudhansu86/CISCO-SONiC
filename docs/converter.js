@@ -149,6 +149,26 @@ class CiscoToSonicConverter {
                 });
             }
 
+            // Static route
+            else if (line.match(/^ip\s+route\s+(\S+)\s+(\S+)\s+(\S+)$/i)) {
+                const match = line.match(/^ip\s+route\s+(\S+)\s+(\S+)\s+(\S+)$/i);
+                const destNet = match[1];
+                const destMask = match[2];
+                const nextHop = match[3];
+                const destCidr = this.maskToCidr(destMask);
+                const routeKey = `${destNet}/${destCidr}|0.0.0.0/0|${nextHop}`;
+                this.config.staticRoutes[routeKey] = { nexthop: nextHop, ifname: '' };
+            }
+        }
+
+        const endTime = performance.now();
+        return {
+            json: this.generateJSON(),
+            cli: this.generateCLI(),
+            stats: this.generateStats(),
+            time: Math.round(endTime - startTime)
+        };
+    }
 
     expandVlanRange(vlanSpec) {
         const vlans = [];
