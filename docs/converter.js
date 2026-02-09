@@ -345,7 +345,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadExampleBtn = document.getElementById('loadExample');
     const clearInputBtn = document.getElementById('clearInput');
     const downloadBtn = document.getElementById('downloadBtn');
+    const fileUpload = document.getElementById('fileUpload');
     const statsDiv = document.getElementById('stats');
+
+    // File upload handler
+    fileUpload.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                ciscoInput.value = e.target.result;
+                // Clear the file input so the same file can be uploaded again
+                fileUpload.value = '';
+            };
+            reader.onerror = () => {
+                alert('Error reading file. Please try again.');
+            };
+            reader.readAsText(file);
+        }
+    });
 
     // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');

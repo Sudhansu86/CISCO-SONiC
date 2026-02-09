@@ -19,16 +19,30 @@
             </div>
         </header>
 
+        <!-- Clarification Banner -->
+        <div class="info-banner">
+            <div class="banner-icon">✨</div>
+            <div class="banner-content">
+                <strong>Real-Time Conversion:</strong> This web demo performs <strong>actual configuration conversion</strong> using JavaScript.
+                Your Cisco IOS/IOS-XE configuration is parsed in real-time and converted to valid SONiC JSON and CLI commands.
+                All processing happens in your browser - no data is sent to any server.
+            </div>
+        </div>
+
         <div class="main-content">
             <div class="panel">
                 <div class="panel-header">
                     <h2>📥 Cisco Configuration Input</h2>
                     <div class="button-group">
+                        <label for="fileUpload" class="btn btn-secondary file-upload-btn">
+                            📁 Upload File
+                            <input type="file" id="fileUpload" accept=".txt,.cfg,.conf" style="display: none;">
+                        </label>
                         <button id="loadExample" class="btn btn-secondary">Load Example</button>
                         <button id="clearInput" class="btn btn-secondary">Clear</button>
                     </div>
                 </div>
-                <textarea id="ciscoInput" placeholder="Paste your Cisco IOS/IOS-XE configuration here...
+                <textarea id="ciscoInput" placeholder="Paste your Cisco IOS/IOS-XE configuration here, or click 'Upload File' to load from your computer...
 
 Example:
 hostname DC-SWITCH-01

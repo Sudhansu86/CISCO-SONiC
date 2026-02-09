@@ -63,6 +63,42 @@ header h1 {
     color: white;
 }
 
+/* Info Banner */
+.info-banner {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 3px solid #047857;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.banner-icon {
+    font-size: 2em;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.banner-content {
+    flex: 1;
+    font-size: 1em;
+    line-height: 1.6;
+}
+
+.banner-content strong {
+    font-weight: 600;
+}
+
 .main-content {
     padding: 40px;
 }
@@ -192,6 +228,18 @@ textarea:focus {
 
 .btn-success:hover {
     background: #059669;
+}
+
+/* File Upload Button */
+.file-upload-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-upload-btn:hover {
+    background: #4b5563;
 }
 
 .tabs {
