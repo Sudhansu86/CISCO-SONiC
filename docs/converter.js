@@ -36,6 +36,7 @@ class CiscoToSonicConverter {
         const lines = ciscoConfig.split('\n');
         let currentInterface = null;
         let currentInterfaceRange = [];
+        let currentVlan = null;
         let interfaceCounter = 1;
 
         for (let line of lines) {
@@ -44,15 +45,32 @@ class CiscoToSonicConverter {
             // Hostname
             if (line.startsWith('hostname ')) {
                 this.config.hostname = line.substring(9).trim();
+                currentInterface = null;
+                currentVlan = null;
             }
 
-            // VLAN range
+            // VLAN range or single VLAN
             else if (line.match(/^vlan\s+([\d,-]+)$/i)) {
                 const vlanSpec = line.match(/^vlan\s+([\d,-]+)$/i)[1];
                 const vlans = this.expandVlanRange(vlanSpec);
                 vlans.forEach(vlanId => {
                     this.config.vlans[`Vlan${vlanId}`] = { vlanid: vlanId.toString() };
                 });
+                // Track current VLAN for name parsing
+                if (vlans.length === 1) {
+                    currentVlan = `Vlan${vlans[0]}`;
+                } else {
+                    currentVlan = null;
+                }
+                currentInterface = null;
+            }
+
+            // VLAN name
+            else if (currentVlan && line.match(/^name\s+(.+)$/i)) {
+                const vlanName = line.match(/^name\s+(.+)$/i)[1];
+                if (this.config.vlans[currentVlan]) {
+                    this.config.vlans[currentVlan].name = vlanName;
+                }
             }
 
             // Interface range
@@ -60,6 +78,7 @@ class CiscoToSonicConverter {
                 const rangeSpec = line.match(/^interface\s+range\s+(.+)$/i)[1];
                 currentInterfaceRange = this.expandInterfaceRange(rangeSpec);
                 currentInterface = null;
+                currentVlan = null;
             }
 
             // Single interface
@@ -67,6 +86,7 @@ class CiscoToSonicConverter {
                 const intfName = line.match(/^interface\s+(\S+)$/i)[1];
                 currentInterface = this.convertInterfaceName(intfName);
                 currentInterfaceRange = [];
+                currentVlan = null;
 
                 if (!this.config.interfaces[currentInterface]) {
                     this.config.interfaces[currentInterface] = { admin_status: 'down' };
@@ -90,6 +110,11 @@ class CiscoToSonicConverter {
                     // No shutdown
                     else if (line.match(/^no\s+shutdown$/i)) {
                         this.config.interfaces[intf].admin_status = 'up';
+                    }
+
+                    // No switchport (Layer 3 interface)
+                    else if (line.match(/^no\s+switchport$/i)) {
+                        this.config.interfaces[intf].switchport_mode = 'routed';
                     }
 
                     // Switchport mode access
@@ -317,6 +342,77 @@ class CiscoToSonicConverter {
                 }
                 cli += '\n';
             }
+        }
+
+        // Interfaces
+        if (Object.keys(this.config.interfaces).length > 0) {
+            cli += '# Configure Interfaces\n';
+            cli += 'echo "Configuring interfaces..."\n';
+            for (let intfName in this.config.interfaces) {
+                const intf = this.config.interfaces[intfName];
+
+                // Description
+                if (intf.description) {
+                    cli += `sudo config interface description ${intfName} "${intf.description}"\n`;
+                }
+
+                // Admin status
+                if (intf.admin_status) {
+                    if (intf.admin_status === 'up') {
+                        cli += `sudo config interface startup ${intfName}\n`;
+                    } else {
+                        cli += `sudo config interface shutdown ${intfName}\n`;
+                    }
+                }
+
+                // MTU
+                if (intf.mtu) {
+                    cli += `sudo config interface mtu ${intfName} ${intf.mtu}\n`;
+                }
+            }
+            cli += '\n';
+        }
+
+        // VLAN Members
+        if (Object.keys(this.config.vlanMembers).length > 0) {
+            cli += '# Configure VLAN Members\n';
+            cli += 'echo "Configuring VLAN members..."\n';
+            for (let memberKey in this.config.vlanMembers) {
+                const [vlanName, port] = memberKey.split('|');
+                const member = this.config.vlanMembers[memberKey];
+                const vlanId = this.config.vlans[vlanName]?.vlanid;
+
+                if (vlanId) {
+                    if (member.tagging_mode === 'untagged') {
+                        cli += `sudo config vlan member add ${vlanId} ${port} -u\n`;
+                    } else {
+                        cli += `sudo config vlan member add ${vlanId} ${port}\n`;
+                    }
+                }
+            }
+            cli += '\n';
+        }
+
+        // VLAN Interfaces (Layer 3)
+        if (Object.keys(this.config.interfaceIPs).length > 0) {
+            cli += '# Configure VLAN Interface IP Addresses\n';
+            cli += 'echo "Configuring VLAN interface IPs..."\n';
+            for (let ipKey in this.config.interfaceIPs) {
+                const [intfName, ipCidr] = ipKey.split('|');
+                cli += `sudo config interface ip add ${intfName} ${ipCidr}\n`;
+            }
+            cli += '\n';
+        }
+
+        // Static Routes
+        if (Object.keys(this.config.staticRoutes).length > 0) {
+            cli += '# Configure Static Routes\n';
+            cli += 'echo "Configuring static routes..."\n';
+            for (let routeKey in this.config.staticRoutes) {
+                const [prefix, vrf, nexthop] = routeKey.split('|');
+                cli += `sudo config route add prefix ${prefix} nexthop ${nexthop}\n`;
+            }
+            cli += '\n';
         }
 
         cli += 'echo "Configuration complete!"\n';
